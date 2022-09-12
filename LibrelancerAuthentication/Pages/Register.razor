@@ -1,0 +1,43 @@
+@page "/register"
+@inject UserDbService Users
+<PageTitle>Register</PageTitle>
+
+<h1>Register</h1>
+
+<p>@statusmessage</p>
+<p>
+    <label>
+        Username:
+        <input @bind="username"/>
+    </label>
+</p>
+<p>
+    <label>
+        Password:
+        <input type="password" @bind="password"/>
+    </label>
+</p>
+
+<div class="@(spin ? "loader" : "")"></div>
+<button class="btn btn-primary" @onclick="Submit">Register</button>
+
+@code {
+    private string username = "";
+    private string password = "";
+    private string statusmessage = "";
+    private bool spin = false;
+
+    private async Task Submit()
+    {
+        spin = true;
+        if (await Users.Register(username, password))
+        {
+            statusmessage = "Registered successfully!";
+        }
+        else
+        {
+            statusmessage = "User already exists";
+        }
+        spin = false;
+    }
+}

@@ -8,9 +8,9 @@ Passwords are hashed server-side using the ASP.NET password hasher, which at cur
 
 The location of the user database may be configured in appsettings.json
 
-The web server provides 4 endpoints:
+The web server provides a basic UI for registering and changing passwords on `/`, and provides the following endpoints:
 
-## GET /
+## GET /info
 Returns a json object containing `{ "application": "authserver", "registerEnabled": "true" }`.
 Use this to identify the server.
 
@@ -25,6 +25,12 @@ Returns 200 OK if the user was able to be registered. Returns 400 Bad Request ot
 Accepts JSON object with members `username` and `password`
 
 Returns 200 OK with `{ "token": "TOKENVALUE" }` on success, this token should be passed to the game server - which will pass it back to the login server. Returns 400 Bad Request on failure
+
+## POST /changepassword
+
+Accepts JSON obejct with members `username`, `oldpassword` and `newpassword`.
+
+Returns 200 OK on success. Returns 400 Bad Request on failure.
 
 ## POST /verifytoken
 
