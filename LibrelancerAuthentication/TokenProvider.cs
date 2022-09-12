@@ -54,6 +54,7 @@ public class TokenProvider
         if (!tokens.TryRemove(idStr, out tk)) return false;
         if (tk.expiry < DateTime.Now) return false;
 
+        value = tk.value;
         return true;
     }
 
