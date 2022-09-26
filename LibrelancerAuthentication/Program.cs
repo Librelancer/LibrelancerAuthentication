@@ -29,6 +29,11 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+var pathBase = builder.Configuration.GetValue<string>("PathBase");
+if (!string.IsNullOrWhiteSpace(pathBase)) {
+    GlobalVars.PathBase = pathBase;
+    app.UsePathBase(pathBase);
+}
 
 app.UseRouting();
 
