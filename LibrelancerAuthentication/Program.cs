@@ -49,6 +49,8 @@ app.MapGet("/info", () => Results.Ok(new
 
 app.MapPost("/login", async (PasswordRequestData request, UserDbService users) =>
 {
+    if (!request.Validate(out var error)) return error;
+    
     var user = await users.Login(request.username, request.password);
     if (user != null)
     {
@@ -59,6 +61,8 @@ app.MapPost("/login", async (PasswordRequestData request, UserDbService users) =
 
 app.MapPost("/changepassword", async (ChangePasswordRequestData request, UserDbService users) =>
 {
+    if (!request.Validate(out var error)) return error;
+    
     if (await users.ChangePassword(request.username, request.oldpassword, request.newpassword))
     {
         return Results.Ok();
@@ -75,6 +79,8 @@ app.MapPost("/verifytoken", (TokenRequestData token) =>
 
 app.MapPost("/register", async (PasswordRequestData request, UserDbService users) =>
 {
+    if (!request.Validate(out var error)) return error;
+    
     if (await users.Register(request.username, request.password))
     {
         return Results.Ok("User registered successfully");
