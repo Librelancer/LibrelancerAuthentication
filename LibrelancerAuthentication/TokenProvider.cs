@@ -29,6 +29,7 @@ public class TokenProvider
     }
 
 
+    //This is guaranteed to produce a string < 40 characters
     public string GenerateToken(int id, string value)
     {
         var shortGuid = Convert.ToBase64String(Guid.NewGuid().ToByteArray())

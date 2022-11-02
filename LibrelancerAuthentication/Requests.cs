@@ -20,4 +20,11 @@ record ChangePasswordRequestData(string username, string oldpassword, string new
     }
 }
 
-record TokenRequestData(string token);
+record TokenRequestData(string token) : IValidateRecord
+{
+    public bool Validate(out IResult error)
+    {
+        error = null;
+        return Validation.TokenLength(token, ref error);
+    }
+}

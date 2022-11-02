@@ -72,6 +72,8 @@ app.MapPost("/changepassword", async (ChangePasswordRequestData request, UserDbS
 
 app.MapPost("/verifytoken", (TokenRequestData token) =>
 {
+    if (!token.Validate(out var error)) return error;
+    
     if (tokens.VerifyToken(token.token, out var value))
         return Results.Ok(new {guid = value});
     return Results.BadRequest("Invalid token");

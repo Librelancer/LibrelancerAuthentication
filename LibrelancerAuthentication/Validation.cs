@@ -16,6 +16,16 @@ public static class Validation
         }
         return true;
     }
+
+    public static bool TokenLength(string token, ref IResult error)
+    {
+        if (token.Length > 40)
+        {
+            error = Results.BadRequest("TokenTooLong");
+            return false;
+        }
+        return true;
+    }
     
     public static bool Username(string username, ref IResult error)
     {
