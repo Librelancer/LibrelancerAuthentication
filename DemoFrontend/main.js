@@ -10,8 +10,8 @@ function calculateSha256(message) {
    return SHA256.createHash().update(message).digest("hex");
 }
 
-function powMessage(msg, difficulty, done) {
-    msg.utctime =  Math.floor((new Date()).getTime() / 1000).toString();
+function powMessageFallback(msg, difficulty, done)
+{
     var nonceInt = 0;
     var data = "";
     for(const property in msg) {
@@ -40,6 +40,20 @@ function powMessage(msg, difficulty, done) {
         }
     }
     setTimeout(processChunk);
+}
+
+function powMessage(msg, difficulty, done) {
+    msg.utctime =  Math.floor((new Date()).getTime() / 1000).toString();
+    if(window.Worker) {
+        myWorker.onmessage = (e) => {
+            msg.nonce = e.data.nonce;
+            msg.hash = e.data.hash;
+            done();
+        };
+        myWorker.postMessage([msg, difficulty]);
+    } else {
+        powMessageFallback(msg, difficulty, done);
+    }
 }
 
 function doRequest(url, data, difficulty)
@@ -100,6 +114,9 @@ function init()
    document.getElementById("register-form").addEventListener("submit",handleRegister);
    document.getElementById("change-password-form").addEventListener("submit",handleChangePassword);
    document.getElementById("server-url").textContent="Server URL: " + APP_PATH;
+   if(window.Worker) {
+        myWorker = new Worker('./pow-worker.js');
+   }
    fetch(APP_PATH + "/info").then(async (response) => {
        if(response.ok) {
            var res = await response.json();
