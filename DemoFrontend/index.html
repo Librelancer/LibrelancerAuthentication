@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+       <script src="config.js"></script>
+       <script src="sha256-uint8array.min.js"></script>
+       <script src="main.js"></script>
+       <link rel="stylesheet" href="main.css"> 
+   </head>
+   <body>
+       <div id="container">
+        <h1>Librelancer Authentication</h1>
+        <p id="server-url"></p>
+        <hr/>
+        <noscript>Javascript is required</noscript>
+        <div id="register-card" class="hidden">
+        <h2>Register</h2>
+        <form id="register-form">
+            <label for="register_username">Username:</label><br>
+            <input type="text" id="username" name="username"><br>
+            <label for="password">Password:</label><br>
+            <input type="password" id="password" name="password"><br>
+            <label for="confirmpassword">Confirm Password:</label><br>
+            <input type="password" id="confirmpassword" name="confirmpassword"><br>
+            <button>Register</button>
+        </form> 
+        </div>
+        <div id="register-disabled" class="hidden">Registration is disabled</div>
+        <hr>
+        <h2>Change Password</h2>
+        <form id="change-password-form">
+            <label for="register_username">Username:</label><br>
+            <input type="text" id="username" name="username"><br>
+            <label for="oldpassword">Old Password:</label><br>
+            <input type="password" id="oldpassword" name="oldpassword"><br>
+            <label for="newpassword">New Password:</label><br>
+            <input type="password" id="newpassword" name="newpassword"><br>
+            <button>Change</button>
+        </form> 
+        </div>
+       <div id="loadingmodal" class="hidden">
+            <div class="loader-card">
+                <div class="loader"></div>
+            </div>
+       </div>
+   </body>
+</html>
