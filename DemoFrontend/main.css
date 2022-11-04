@@ -13,6 +13,11 @@ body { width: 100%; }
 	margin: 40px auto;
 	padding: 0 10px;
 }
+#apploading {
+    max-width: 650px;
+    margin: 40px auto;
+	padding: 0 10px;
+}
 
 h1,
 h2,
@@ -48,6 +53,7 @@ h3 {
     z-index: 1000;
     background: rgba(0,0,0,0.5);
 }
+
 
 .hidden {
     display: none;

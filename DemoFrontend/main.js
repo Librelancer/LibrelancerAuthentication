@@ -100,9 +100,7 @@ function init()
    document.getElementById("register-form").addEventListener("submit",handleRegister);
    document.getElementById("change-password-form").addEventListener("submit",handleChangePassword);
    document.getElementById("server-url").textContent="Server URL: " + APP_PATH;
-   showLoader();
    fetch(APP_PATH + "/info").then(async (response) => {
-       hideLoader();
        if(response.ok) {
            var res = await response.json();
            console.log(res);
@@ -114,10 +112,12 @@ function init()
            } else {
               document.getElementById("register-disabled").className = "";
            }
+           document.getElementById("apploading").className = "hidden";
+           document.getElementById("container").className = "";
        } else {
-           alert("Failed to load application");
+           alert("Failed to load application: " + response.text());
        }
-   });
+   }).catch((x) => alert("Failed to load application: " + x));
 }
 
 function hideLoader() {
