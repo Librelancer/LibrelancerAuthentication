@@ -1,12 +1,10 @@
 using LibrelancerAuthentication;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var tokens = new TokenProvider(TimeSpan.FromMinutes(2));
-var passwordHasher = new PasswordHasher<User>();
-
 var builder = WebApplication.CreateBuilder(args);
-var dbPath = builder.Configuration.GetValue<string>("AppDb");
 
 var DebugOrigins = "_debugOrigins";
 
@@ -14,12 +12,22 @@ builder.Services.AddCors(options => {
     options.AddPolicy(name: DebugOrigins, policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
-using (var context = new UserDbContext(dbPath))
-{
-    if (context.Database.GetPendingMigrations().Any()) context.Database.Migrate();
-}
+var backend = builder.Configuration.GetValue<string>("Backend", "sqlite");
 
-builder.Services.AddSingleton(_ => new UserDbService(dbPath, passwordHasher));
+if (backend == "sqlite")
+{
+    var dbPath = builder.Configuration.GetValue<string>("AppDb");
+    using (var context = new UserDbContext(dbPath))
+    {
+        if (context.Database.GetPendingMigrations().Any()) context.Database.Migrate();
+    }
+    builder.Services.AddSingleton<IUserDbService>(_ => new UserDbService(dbPath));
+}
+else
+{
+    Console.Error.WriteLine($"Backend not implemented {backend}");
+    return;
+}
 
 var app = builder.Build();
 // Configure the HTTP request pipeline.
@@ -49,26 +57,37 @@ app.UseRouting();
 
 if (app.Environment.IsDevelopment()) app.UseCors(DebugOrigins);
 
-var appInfoObject = new Dictionary<string, object>();
-appInfoObject["application"] = "authserver";
-if (registerEnabled)
+
+IResult AppInfo(IUserDbService users)
 {
-    appInfoObject["registerEnabled"] = true;
-    appInfoObject["registerDifficulty"] = registerFactor;
+    var appInfoObject = new Dictionary<string, object>();
+    appInfoObject["application"] = "authserver";
+    if (registerEnabled && users.CanRegister)
+    {
+        appInfoObject["registerEnabled"] = true;
+        appInfoObject["registerDifficulty"] = registerFactor;
+    }
+    else
+        appInfoObject["registerEnabled"] = false;
+
+    appInfoObject["loginDifficulty"] = loginFactor;
+    if (users.CanChangePassword)
+    {
+        appInfoObject["changePasswordEnabled"] = true;
+        appInfoObject["changePasswordDifficulty"] = changePasswordFactor;
+    }
+    else
+    {
+        appInfoObject["changePasswordEnabled"] = false;
+    }
+    return Results.Ok(appInfoObject);
 }
-else
-    appInfoObject["registerEnabled"] = false;
 
-appInfoObject["loginDifficulty"] = loginFactor;
-appInfoObject["changePasswordDifficulty"] = changePasswordFactor;
-
-var appInfo = Results.Ok(appInfoObject);
-
-app.MapGet("/", () => appInfo);
-app.MapGet("/info", () => appInfo);
+app.MapGet("/", AppInfo);
+app.MapGet("/info", AppInfo);
 
 
-app.MapPost("/login", async (PasswordRequestData request, UserDbService users) =>
+app.MapPost("/login", async (PasswordRequestData request, IUserDbService users) =>
 {
     if (!request.Validate(loginDifficulty ,out var error)) return error;
     
@@ -80,8 +99,9 @@ app.MapPost("/login", async (PasswordRequestData request, UserDbService users) =
     return Results.BadRequest("Invalid username or password");
 });
 
-app.MapPost("/changepassword", async (ChangePasswordRequestData request, UserDbService users) =>
+app.MapPost("/changepassword", async (ChangePasswordRequestData request, IUserDbService users) =>
 {
+    if (!users.CanChangePassword) return Results.BadRequest("Cannot change password");
     if (!request.Validate(changePasswordDifficulty, out var error)) return error;
     
     if (await users.ChangePassword(request.username, request.oldpassword, request.newpassword))
@@ -102,8 +122,9 @@ app.MapPost("/verifytoken", (TokenRequestData token) =>
 
 if (registerEnabled)
 {
-    app.MapPost("/register", async (PasswordRequestData request, UserDbService users) =>
+    app.MapPost("/register", async (PasswordRequestData request, IUserDbService users) =>
     {
+        if (!users.CanRegister) return Results.BadRequest("Cannot register user");
         if (!request.Validate(registerDifficulty, out var error)) return error;
 
         if (await users.Register(request.username, request.password))

@@ -129,6 +129,11 @@ function init()
            } else {
               document.getElementById("register-disabled").className = "";
            }
+           if(res.changePasswordEnabled) {
+              document.getElementById("change-password-card").className = "";
+           } else {
+              document.getElementById("change-password-disabled").className = "";
+           }
            document.getElementById("apploading").className = "hidden";
            document.getElementById("container").className = "";
        } else {

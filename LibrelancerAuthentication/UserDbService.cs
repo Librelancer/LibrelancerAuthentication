@@ -2,15 +2,19 @@ using Microsoft.AspNetCore.Identity;
 
 namespace LibrelancerAuthentication;
 
-public class UserDbService
+public class UserDbService : IUserDbService
 {
     private string dbPath;
     private PasswordHasher<User> passwordHasher;
-    public UserDbService(string dbPath, PasswordHasher<User> passwordHasher)
+    
+    public UserDbService(string dbPath)
     {
         this.dbPath = dbPath;
-        this.passwordHasher = passwordHasher;
+        this.passwordHasher = new PasswordHasher<User>();
     }
+
+    public bool CanRegister => true;
+    public bool CanChangePassword => true;
 
     public async Task<User> Login(string username, string password)
     {
