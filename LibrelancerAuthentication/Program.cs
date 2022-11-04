@@ -31,9 +31,9 @@ if (!app.Environment.IsDevelopment())
 }
 
 var pathBase = builder.Configuration.GetValue<string>("PathBase");
-var loginFactor = builder.Configuration.GetValue<int>("LoginDifficulty", 5);
-var changePasswordFactor = builder.Configuration.GetValue<int>("ChangePasswordDifficulty", 5);
-var registerFactor = builder.Configuration.GetValue<int>("RegisterDifficulty", 6);
+var loginFactor = builder.Configuration.GetValue<int>("LoginDifficulty", 3);
+var changePasswordFactor = builder.Configuration.GetValue<int>("ChangePasswordDifficulty", 3);
+var registerFactor = builder.Configuration.GetValue<int>("RegisterDifficulty", 4);
 var registerEnabled = builder.Configuration.GetValue<bool>("RegisterEnabled", true);
 
 var loginDifficulty = new string('0', loginFactor);
