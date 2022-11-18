@@ -1,6 +1,8 @@
 var registerDifficulty = 0;
 var loginDifficulty = 0;
 var changePasswordDifficulty = 0; 
+var captchaDifficulty = 0;
+var solvedCaptchaToken = "";
 
 //This makes use of sha256-uint8array library
 //MIT License
@@ -77,6 +79,7 @@ function doRequest(url, data, difficulty)
     })
 }
 
+var registerProps = {}
 function handleRegister(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -86,9 +89,16 @@ function handleRegister(e) {
         alert("Passwords do not match");
         return;
     }
+    registerProps = formProps;
+    loadCaptcha();
+}
+
+function continueRegister(token)
+{
     doRequest("/register", {
-        username: formProps.username,
-        password: formProps.password
+        username: registerProps.username,
+        password: registerProps.password,
+        captchaToken: token
     }, registerDifficulty);
 }
 
@@ -109,11 +119,72 @@ function username(e) {
         e.preventDefault();
 }
 
+captchaId = "";
+
+function loadCaptcha()
+{
+    document.getElementById("captchamodal").className = "";
+    document.getElementById("captcha-loading").className = "";
+    document.getElementById("captcha-background").className = "hidden";
+    document.getElementById("captcha-piece").className = "hidden";
+    document.getElementById("captchaSlider").className = "hidden";
+    var data = {};
+    powMessage(data, captchaDifficulty, () => {
+       
+        fetch(APP_PATH + "/createcaptcha", { method: 'POST', body: JSON.stringify(data), headers: {
+            'Content-Type': 'application/json'
+        }}).then(async (response) => {
+            var res = await response.json();
+            document.getElementById("captcha-background").style.backgroundImage = "url('" + res.background + "')";
+            document.getElementById("captcha-piece").style.backgroundImage = "url('" + res.piece + "')";
+            document.getElementById("captcha-piece").style.marginTop = res.y + "px";
+            document.getElementById("captcha-piece").style.marginLeft = "0";
+            document.getElementById("captchaSlider").value = "0";
+            document.getElementById("captcha-background").className = "";
+            document.getElementById("captcha-piece").className = "";
+            document.getElementById("captchaSlider").className = "slider";
+            document.getElementById("captcha-loading").className = "hidden";
+            captchaId = res.id;
+        });
+    });
+}
+
+function slideCaptcha(e)
+{
+    document.getElementById("captcha-piece").style.marginLeft = e.target.value + "px";
+}
+
+function finishCaptcha(e)
+{
+    document.getElementById("captcha-piece").style.marginLeft = e.target.value + "px";
+    var data = {
+        'id': captchaId,
+        'x': e.target.value
+    };
+    fetch(APP_PATH + "/checkcaptcha",{ method: 'POST', body: JSON.stringify(data), headers: {
+        'Content-Type': 'application/json'
+    }}).then(async (response) => {
+      if(response.ok) {
+        var res = await response.json();
+        document.getElementById("captchamodal").className = "hidden";
+        continueRegister(res.token);
+       }
+      else {
+        var error = await response.text();
+        if(error === "\"Expired\"") loadCaptcha();
+        else alert('Error: ' + error);
+      }
+    });
+}
+
 function init()
 {
    document.getElementById("register-form").addEventListener("submit",handleRegister);
    document.getElementById("change-password-form").addEventListener("submit",handleChangePassword);
    document.getElementById("server-url").textContent="Server URL: " + APP_PATH;
+   document.getElementById("captchaSlider").addEventListener("input",slideCaptcha);
+   document.getElementById("captchaSlider").addEventListener("change",finishCaptcha);
+
    if(window.Worker) {
         myWorker = new Worker('./pow-worker.js');
    }
@@ -124,6 +195,7 @@ function init()
            registerDifficulty = res.registerDifficulty;
            loginDifficulty = res.loginDifficulty;
            changePasswordDifficulty = res.changePasswordDifficulty;
+           captchaDifficulty = res.captchaDifficulty;
            if(res.registerEnabled) {
               document.getElementById("register-card").className = "";
            } else {

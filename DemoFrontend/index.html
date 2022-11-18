@@ -46,9 +46,23 @@
         <div id="change-password-disabled" class="hidden">Changing password is disabled</div> 
         </div>
        <div id="loadingmodal" class="hidden">
-            <div class="loader-card">
+            <div class="modal-card">
                 <div class="loader"></div>
             </div>
+       </div>
+       <div id="captchamodal" class="hidden">
+        <div class="modal-card">
+        <h3>Please solve the captcha to continue</h3>
+        <div id="captcha">
+            <span id="captcha-loading" class="hidden">Loading</span>
+            <div id="captcha-background">
+                <div id="captcha-piece"></div>
+            </div>
+            <div class="slidecontainer">
+                <input type="range" min="0" max="352" value="0" class="slider" id="captchaSlider">
+            </div>
+        </div>
+        </div>
        </div>
    </body>
 </html>

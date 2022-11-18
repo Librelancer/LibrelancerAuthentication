@@ -1,6 +1,5 @@
 using LibrelancerAuthentication;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+using LibrelancerAuthentication.Captcha;
 using Microsoft.EntityFrameworkCore;
 
 var tokens = new TokenProvider(TimeSpan.FromMinutes(2));
@@ -11,6 +10,8 @@ var DebugOrigins = "_debugOrigins";
 builder.Services.AddCors(options => {
     options.AddPolicy(name: DebugOrigins, policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
+
+builder.Services.AddSingleton(new CaptchaService(new CaptchaBackground()));
 
 var backend = builder.Configuration.GetValue<string>("Backend", "sqlite");
 
@@ -42,11 +43,13 @@ var pathBase = builder.Configuration.GetValue<string>("PathBase");
 var loginFactor = builder.Configuration.GetValue<int>("LoginDifficulty", 3);
 var changePasswordFactor = builder.Configuration.GetValue<int>("ChangePasswordDifficulty", 3);
 var registerFactor = builder.Configuration.GetValue<int>("RegisterDifficulty", 4);
+var captchaFactor = builder.Configuration.GetValue<int>("CaptchaCreateDifficulty", 2);
 var registerEnabled = builder.Configuration.GetValue<bool>("RegisterEnabled", true);
 
 var loginDifficulty = new string('0', loginFactor);
 var changePasswordDifficulty = new string('0', changePasswordFactor);
 var registerDifficulty = new string('0', registerFactor);
+var captchaDifficulty = new string('0', captchaFactor);
 
 if (!string.IsNullOrWhiteSpace(pathBase)) {
     GlobalVars.PathBase = pathBase;
@@ -62,6 +65,7 @@ IResult AppInfo(IUserDbService users)
 {
     var appInfoObject = new Dictionary<string, object>();
     appInfoObject["application"] = "authserver";
+    appInfoObject["captchaDifficulty"] = captchaFactor;
     if (registerEnabled && users.CanRegister)
     {
         appInfoObject["registerEnabled"] = true;
@@ -120,13 +124,29 @@ app.MapPost("/verifytoken", (TokenRequestData token) =>
     return Results.BadRequest("Invalid token");
 });
 
+app.MapPost("/createcaptcha", (CaptchaCreateRequest request, CaptchaService captchas) =>
+{
+    if (!request.Validate(captchaDifficulty, out var error)) return error;
+    return Results.Ok(captchas.Create());
+});
+
+app.MapPost("/checkcaptcha", (CaptchaCheckData request, CaptchaService captchas) =>
+{
+    var result = captchas.CheckCaptcha(request.id, request.x, out string token);
+    if (result == CaptchaResult.Ok)
+        return Results.Ok(new{ token = token });
+    else
+        return Results.BadRequest(result.ToString());
+});
+
 if (registerEnabled)
 {
-    app.MapPost("/register", async (PasswordRequestData request, IUserDbService users) =>
+    app.MapPost("/register", async (PasswordRequestData request, IUserDbService users, CaptchaService captchas) =>
     {
         if (!users.CanRegister) return Results.BadRequest("Cannot register user");
         if (!request.Validate(registerDifficulty, out var error)) return error;
-
+        if (!captchas.CheckToken(request.captchaToken)) return Results.BadRequest("Invalid captchaToken");
+        
         if (await users.Register(request.username, request.password))
         {
             return Results.Ok("User registered successfully");

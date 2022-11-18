@@ -7,7 +7,7 @@ public class TokenProvider
 {
     private readonly TimeSpan expireTime;
 
-    private readonly ConcurrentDictionary<string, Token> tokens = new();
+    private readonly ExpiringDictionary<string, Token> tokens = new();
 
     public TokenProvider(TimeSpan expireTime)
     {
@@ -37,8 +37,7 @@ public class TokenProvider
             .Replace("/", "_")
             .Replace("+", "-");
         var idStr = ToBase36(id);
-        tokens.AddOrUpdate(idStr, a => new Token(DateTime.Now + expireTime, shortGuid, value),
-            (a, b) => new Token(DateTime.Now + expireTime, shortGuid, value));
+        tokens.Set(idStr, new Token(DateTime.UtcNow + expireTime, shortGuid, value));
         return $"{idStr}Z{shortGuid}";
     }
 
@@ -51,13 +50,12 @@ public class TokenProvider
         var shortGuid = token.Substring(zIdx + 1);
 
         if (!tokens.TryGetValue(idStr, out var tk)) return false;
-        if (tk.token != shortGuid) return false;
-        if (!tokens.TryRemove(idStr, out tk)) return false;
-        if (tk.expiry < DateTime.Now) return false;
+        if (tk.TokenString != shortGuid) return false;
+        tokens.Remove(idStr);
 
-        value = tk.value;
+        value = tk.Value;
         return true;
     }
 
-    private record Token(DateTime expiry, string token, string value);
+    private record Token(DateTime Expiry, string TokenString, string Value) : IExpiringItem;
 }

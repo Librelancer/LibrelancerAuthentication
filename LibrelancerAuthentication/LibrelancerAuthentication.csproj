@@ -15,6 +15,15 @@
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.8" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Design" Version="1.1.6" />
+        <PackageReference Include="SkiaSharp" Version="2.88.3" />
+        <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Captcha\puzzle.png" />
+      <EmbeddedResource Include="Captcha\puzzle.png" />
+      <None Remove="Captcha\puzzle-stroke.png" />
+      <EmbeddedResource Include="Captcha\puzzle-stroke.png" />
     </ItemGroup>
 
 </Project>

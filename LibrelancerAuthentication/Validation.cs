@@ -66,7 +66,7 @@ public static class Validation
             return false;
         }
 
-        if (hash != ComputeSHA256(string.Concat(parameters)))
+        if (hash != ComputeSHA256(string.Concat(parameters.Where(x => x != null))))
         {
             error = Results.BadRequest("HashMismatch");
             return false;
