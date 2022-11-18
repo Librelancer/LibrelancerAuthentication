@@ -52,7 +52,6 @@ var registerDifficulty = new string('0', registerFactor);
 var captchaDifficulty = new string('0', captchaFactor);
 
 if (!string.IsNullOrWhiteSpace(pathBase)) {
-    GlobalVars.PathBase = pathBase;
     app.UsePathBase(pathBase);
 }
 
