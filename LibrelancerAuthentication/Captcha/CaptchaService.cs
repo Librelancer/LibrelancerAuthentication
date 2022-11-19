@@ -82,6 +82,12 @@ public class CaptchaService
         {
             return CaptchaResult.Expired;
         }
+        if (DateTime.UtcNow < data.timestamp + TimeSpan.FromMilliseconds(600))
+        {
+            //Too fast, probably wasn't a human
+            attempts.Set(data.id, new CaptchaAttempt(data.timestamp + captchaExpiry, MaxAttempts));
+            return CaptchaResult.Expired;
+        }
         if (x >= (data.solution - 4) && x <= (data.solution + 4))
         {
             //Set to max attempts, expires the captcha
